@@ -14,14 +14,14 @@ namespace GreggsAndPret
         {
             // You can download FSA data from https://ratings.food.gov.uk/open-data/en-gb
             // Put them all in the same folder (you'll probably want to use a download manager like DownThemAll! for Firefox) and then point to it below.
-            string PathToFSAXMLs = @"C:\Users\thoma\Dropbox\imactivate projects\GreggsAndPret2\FSA data Jan 2020";
-
+            string PathToFSAXMLs = @"../../../../../FSA data Jan 2020";
 
             // Get all xmls
             int success = 0;
             int fail = 0;
 
-            List<Place> Places = new List<Place>();
+            List<Place> AllPlaces = new List<Place>();
+            List<Place> SelectedPlaces = new List<Place>();
             foreach (string filePath in Directory.EnumerateFiles(PathToFSAXMLs, "*.xml"))
             {
                 XmlSerializer serializer = new XmlSerializer(typeof(FHRSEstablishment));
@@ -35,45 +35,71 @@ namespace GreggsAndPret
                     foreach (FHRSEstablishmentEstablishmentDetail detail in root.EstablishmentCollection)
                     {
                         Place place = new Place();
+
+                        place.BusinessType = detail.BusinessType;
+                        place.FullName = detail.BusinessName;
+                        place.Postcode = detail.PostCode;
+                        place.LocalAuthority = detail.LocalAuthorityName;
+                        place.Longitude = detail.Geocode.Longitude;
+                        place.Latitude = detail.Geocode.Latitude;
+                        AllPlaces.Add(place);
+
                         if (detail.BusinessName.Contains("Greggs", StringComparison.InvariantCultureIgnoreCase))
                         {
                             place.Name = "Greggs";
+                            place.BusinessType = detail.BusinessType;
                             place.FullName = detail.BusinessName;
                             place.Postcode = detail.PostCode;
                             place.LocalAuthority = detail.LocalAuthorityName;
                             place.Longitude = detail.Geocode.Longitude;
                             place.Latitude = detail.Geocode.Latitude;
-                            Places.Add(place);
+                            SelectedPlaces.Add(place);
                         }
-                        if (detail.BusinessName.Contains("Pret a Manger", StringComparison.InvariantCultureIgnoreCase))
+                        else if (detail.BusinessName.Contains("Pret a Manger", StringComparison.InvariantCultureIgnoreCase))
                         {
                             place.Name = "Pret";
+                            place.BusinessType = detail.BusinessType;
                             place.FullName = detail.BusinessName;
                             place.Postcode = detail.PostCode;
                             place.LocalAuthority = detail.LocalAuthorityName;
                             place.Longitude = detail.Geocode.Longitude;
                             place.Latitude = detail.Geocode.Latitude;
-                            Places.Add(place);
+                            SelectedPlaces.Add(place);
                         }
-
+                        else if (detail.BusinessName.Contains("Fried Chicken", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            place.Name = "Fried Chicken";
+                            place.BusinessType = detail.BusinessType;
+                            place.FullName = detail.BusinessName;
+                            place.Postcode = detail.PostCode;
+                            place.LocalAuthority = detail.LocalAuthorityName;
+                            place.Longitude = detail.Geocode.Longitude;
+                            place.Latitude = detail.Geocode.Latitude;
+                            SelectedPlaces.Add(place);
+                        }
                     }
                     success++;
                 }
                 catch
                 {
+                    Console.WriteLine($"Failed to read file at {filePath}.");
                     fail++;
                 }
             }
 
-            using (TextWriter writer = new StreamWriter(@"GreggsAndPret.csv", false, System.Text.Encoding.UTF8))
+            using (TextWriter writer = new StreamWriter(@"GreggsAndPretAndFriedChicken.csv", false, System.Text.Encoding.UTF8))
             {
                 var csv = new CsvWriter(writer);
-                csv.WriteRecords(Places);
+                csv.WriteRecords(SelectedPlaces);
+            }
+            
+            using (TextWriter writer = new StreamWriter(@"AllFSAPlacesFlat.csv", false, System.Text.Encoding.UTF8))
+            {
+                var csv = new CsvWriter(writer);
+                csv.WriteRecords(AllPlaces);
             }
 
-
             Console.WriteLine("Success: " + success + " . Fail: " + fail);
-
         }
     }
 
@@ -84,6 +110,7 @@ namespace GreggsAndPret
         public string Postcode { get; set; }
         public string LocalAuthority { get; set; }
         public string City { get; set; }
+        public string BusinessType { get; set; }
         public decimal Latitude { get; set; }
         public decimal Longitude { get; set; }
     }
